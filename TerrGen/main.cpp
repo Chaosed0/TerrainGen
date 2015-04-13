@@ -3,8 +3,6 @@
 
 #include "SDLGame.h"
 
-extern SDLGame theGame = SDLGame();
-
 int main(int argc, char* argv[])
 {
 	return theGame.Execute();

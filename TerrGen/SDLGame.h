@@ -33,7 +33,11 @@ public:
 	void Render();
 	void Cleanup();
 
-	SDL_Surface* Surf_Display;
+    void TestBox();
+    void GlutFakeInit();
+
+    SDL_Window *screen;
+    SDL_GLContext context;
 	bool Running;
 
 	Camera camera;		//Camera in 3D space
@@ -52,6 +56,8 @@ public:
 	float& baseHeight;
 	float& randScale;
 	float& scaleDiv;
+
+    float& wtf;
 
 	bool hasFocus;		//Does the window have focus?
 	int polyCount;

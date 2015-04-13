@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,12 +19,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -37,22 +39,24 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>E:\Libraries\SDL\include\;E:\Libraries\DevIL\include\;E:\Libraries\glconsole\;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Libraries\SDL\lib\;E:\Libraries\devil\lib;E:\Libraries\glconsole\cvars\debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Libraries\SDL2-2.0.3\include\;E:\Libraries\devil-1.7.8\include\;E:\Libraries\glconsole\;E:\Libraries\freeglut-3.0.0\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Libraries\SDL2-2.0.3\lib\x86\;E:\Libraries\devil-1.7.8\lib;E:\Libraries\glconsole\build\CVars\Debug\;E:\Libraries\freeglut-3.0.0\build\lib\Debug\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>E:\Libraries\SDL\include\;E:\Libraries\DevIL\include\;E:\Libraries\glconsole\;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Libraries\SDL\lib\;E:\Libraries\devil\lib;E:\Libraries\glconsole\cvars\release\;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Libraries\SDL2-2.0.3\include\;E:\Libraries\devil-1.7.8\include\;E:\Libraries\glconsole\;E:\Libraries\freeglut\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Libraries\SDL2-2.0.3\lib\x86\;E:\Libraries\devil-1.7.8\lib;E:\Libraries\glconsole\build\CVars\Release\;E:\Libraries\freeglut\lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>DEBUG_CVAR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDLmain.lib;SDL.lib;opengl32.lib;glu32.lib;glut32.lib;DevIL.lib;ILU.lib;ILUT.lib;cvars.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;glu32.lib;DevIL.lib;ILU.lib;ILUT.lib;freeglutd.lib;cvars.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <AdditionalOptions>/NODEFAULTLIB:library %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -61,13 +65,14 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>_LIB;FREEGLUT_LIB_PRAGMAS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SDLmain.lib;SDL.lib;opengl32.lib;glu32.lib;glut32.lib;DevIL.lib;ILU.lib;ILUT.lib;cvars.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;glu32.lib;DevIL.lib;ILU.lib;ILUT.lib;freeglut.lib;cvars.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

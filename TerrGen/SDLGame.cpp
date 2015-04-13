@@ -3,6 +3,8 @@
 
 #include "SDLGame.h"
 
+SDLGame theGame;
+
 inline bool genTerrain(std::vector<std::string> *vArgs)
 {
 	GLConsole* pConsole = GetConsole();
@@ -39,7 +41,8 @@ SDLGame::SDLGame() :
 		drawQuad(CVarUtils::CreateCVar<bool>("terrain.drawQuad", 1, "Drawing using quadtree on/off")),
 		baseHeight(CVarUtils::CreateCVar<float>("terrain.baseHeight", BASE_HEIGHT, "Base height at generation")),
 		randScale(CVarUtils::CreateCVar<float>("terrain.randScale", RAND_SCALE, "Randomness of generation")),
-		scaleDiv(CVarUtils::CreateCVar<float>("terrain.scaleDiv", SCALE_DIV, "Smoothness of generation"))
+		scaleDiv(CVarUtils::CreateCVar<float>("terrain.scaleDiv", SCALE_DIV, "Smoothness of generation")),
+        wtf(CVarUtils::CreateCVar<float>("wtf", 100.0, "lol"))
 {
 	polyCount = 0;
 
@@ -49,7 +52,7 @@ SDLGame::SDLGame() :
 	rotateTimer = Timer(rotateTime);
 
 	Running = true;
-	Surf_Display = NULL;
+    screen = NULL;
 
 	CVarUtils::CreateCVar("polyCount", getPolyCount, "Get the current polygon count");
 	CVarUtils::CreateCVar("terrain.generate", genTerrain, "Generates a new terrain with arguments (baseHeight, randScale, scaleDiv)");
@@ -95,8 +98,15 @@ bool SDLGame::Initialize()
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
 		return false;
 
-	if((Surf_Display = SDL_SetVideoMode(WIN_WIDTH, WIN_HEIGHT, 32, SDL_HWSURFACE | SDL_GL_DOUBLEBUFFER | SDL_OPENGL)) == NULL)
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
+
+	if((screen = SDL_CreateWindow("TerrGen", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIN_WIDTH, WIN_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN)) == NULL)
         return false;
+
+    context = SDL_GL_CreateContext(screen);
 
 	//Do openGL initialization
 	glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
@@ -128,6 +138,8 @@ bool SDLGame::Initialize()
 	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE) ;
 
+    GlutFakeInit();
+
 	//Set the background color
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glLoadIdentity();
@@ -143,23 +155,11 @@ bool SDLGame::Initialize()
 	//textureIDs[0] = ilutGLLoadImage("Content\\GroundTex.png");
 	//glBindTexture(GL_TEXTURE_2D, textureIDs[0]);	//Bind the texture
 
-	SDL_EnableUNICODE(1);
-
 	//Hide the mouse cursor
 	SDL_ShowCursor(0);
 
-	/*for(int i = 0; i < terrain.getLength(); i++)
-	{
-		for(int j = 0; j < terrain.getLength(); j++)
-		{
-			console.Printf("%i\t", terrain.getHeight(j, i));
-		}
-	}*/
-
-	//console.Printf("%f", terrain.getHeight(0, 0));
-	//console.Printf("%f", terrain.getHeight(0, 512));
-	//console.Printf("%f", terrain.getHeight(512, 0));
-	//console.Printf("%f", terrain.getHeight(512, 512));
+    //Initialize glconsole now that we have opengl context
+    console.Init();
 
 	//Successful initialization
 	return true;
@@ -196,85 +196,93 @@ void SDLGame::ProcessEvent(SDL_Event& Event)
 	//If the console is open, feed input to the console
 	if(console.IsOpen())
 	{
-		if(Event.type == SDL_KEYDOWN)
+		if(Event.type == SDL_TEXTINPUT)
 		{
 			//Get the key pressed
-			SDLKey keyPress = Event.key.keysym.sym;
+			char *text = Event.text.text;
 
 			//If the character is `, close the console
-			if(Event.key.keysym.sym == SDLK_BACKQUOTE)
-				console.ToggleConsole();
 			//If the character entered is not a modifier, treat it as a keypress
-			else if(keyPress != SDLK_LSHIFT && keyPress != SDLK_RSHIFT && keyPress != SDLK_RALT && keyPress != SDLK_RCTRL && keyPress != SDLK_LALT && keyPress != SDLK_LCTRL
-				 && keyPress != SDLK_UP && keyPress != SDLK_DOWN && keyPress != SDLK_LEFT && keyPress != SDLK_RIGHT )
-				console.KeyboardFunc(Event.key.keysym.unicode);
-			//Otherwise, treat it as a special character
-			else
-				console.SpecialFunc(Event.key.keysym.unicode);
+            if(*text != '`')
+				console.KeyboardFunc(text[0]);
 
 			//console.Printf("Key down: %i", Event.key.keysym.unicode);
-		}
+        }
+        else if (Event.type == SDL_KEYDOWN) {
+            SDL_Keycode keyPress = Event.key.keysym.sym;
+            if (Event.key.keysym.sym == SDLK_BACKQUOTE) {
+                console.ToggleConsole();
+            } else if (Event.key.keysym.sym == SDLK_RETURN) {
+                console.KeyboardFunc('\r');
+            } else if (Event.key.keysym.sym == SDLK_TAB) {
+                console.KeyboardFunc('\t');
+            } else if (Event.key.keysym.sym == SDLK_BACKSPACE) {
+                console.KeyboardFunc('\b');
+            }
+        }
 	}
 	//If the console isn't open, do stuff
 	else
 	{
 		//Check what type of event it was
-		switch(Event.type)
-		{
-		case SDL_KEYDOWN:							//Key was pressed
-			switch(Event.key.keysym.sym)
-			{
-			case SDLK_BACKQUOTE:				//Tilde, open console
-				console.ToggleConsole();
-				break;
-			case SDLK_ESCAPE:					//Escape, stop running
-				Running = false;
-				break;
-			case SDLK_d:						//D, set keyD to true
-				keyD = true;
-				break;
-			case SDLK_a:						//A, set keyA to true
-				keyA = true;
-				break;
-			case SDLK_w:						//W, set keyW to true
-				keyW = true;
-				break;
-			case SDLK_s:						//S, set keyS to true
-				keyS = true;
-				break;
-			case SDLK_SPACE:					//Space, increment camera's movement modifier
-				camera.incMoveModifier();
-				break;
-			case SDLK_LCTRL:					//Ctrl, decrement camera's movement modifier
-				camera.decMoveModifier();
-				break;
-			}
-			break;
-		case SDL_KEYUP:								//Key was released
-			switch(Event.key.keysym.sym)
-			{
-			case SDLK_d:						//D, set keyA to false
-				keyD = false;
-				break;
-			case SDLK_a:						//A, set keyA to false
-				keyA = false;
-				break;
-			case SDLK_w:						//W, set keyW to false
-				keyW = false;
-				break;
-			case SDLK_s:						//S, set keyS to false
-				keyS = false;
-				break;
-			}
-			break;
-		case SDL_MOUSEMOTION:						//Mouse motion - Rotate camera
-			camera.updateRot((Event.motion.x - WIN_WIDTH/2) * .1, (Event.motion.y - WIN_HEIGHT/2) * .1);
-			break;
-		case SDL_ACTIVEEVENT:
-			if(Event.active.gain == 1)
-				hasFocus = true;
-			else
-				hasFocus = false;
+        switch (Event.type)
+        {
+        case SDL_KEYDOWN:							//Key was pressed
+            switch (Event.key.keysym.sym)
+            {
+            case SDLK_BACKQUOTE:				//Tilde, open console
+                console.ToggleConsole();
+                break;
+            case SDLK_ESCAPE:					//Escape, stop running
+                Running = false;
+                break;
+            case SDLK_d:						//D, set keyD to true
+                keyD = true;
+                break;
+            case SDLK_a:						//A, set keyA to true
+                keyA = true;
+                break;
+            case SDLK_w:						//W, set keyW to true
+                keyW = true;
+                break;
+            case SDLK_s:						//S, set keyS to true
+                keyS = true;
+                break;
+            case SDLK_SPACE:					//Space, increment camera's movement modifier
+                camera.incMoveModifier();
+                break;
+            case SDLK_LCTRL:					//Ctrl, decrement camera's movement modifier
+                camera.decMoveModifier();
+                break;
+            }
+            break;
+        case SDL_KEYUP:								//Key was released
+            switch (Event.key.keysym.sym)
+            {
+            case SDLK_d:						//D, set keyA to false
+                keyD = false;
+                break;
+            case SDLK_a:						//A, set keyA to false
+                keyA = false;
+                break;
+            case SDLK_w:						//W, set keyW to false
+                keyW = false;
+                break;
+            case SDLK_s:						//S, set keyS to false
+                keyS = false;
+                break;
+            }
+            break;
+        case SDL_MOUSEMOTION:						//Mouse motion - Rotate camera
+            camera.updateRot((Event.motion.x - WIN_WIDTH / 2) * .1, (Event.motion.y - WIN_HEIGHT / 2) * .1);
+            break;
+        case SDL_WINDOWEVENT:
+            if (Event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+                hasFocus = true;
+            }
+            else if (Event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+                hasFocus = false;
+            }
 			break;
 		case SDL_QUIT:								//Quit event - stop running
 			Running = false;
@@ -302,7 +310,7 @@ void SDLGame::Loop()
 
 	//If the window has focus, set the mouse to the center so it doesn't go out of bounds
 	if(hasFocus)
-		SDL_WarpMouse(WIN_WIDTH/2, WIN_HEIGHT/2);
+		SDL_WarpMouseInWindow(screen, WIN_WIDTH/2, WIN_HEIGHT/2);
 }
 
 void SDLGame::Render()
@@ -395,6 +403,10 @@ void SDLGame::Render()
 			}
 	}
 
+	//Render the GLConsole, and render it last so it's on top of everything
+    if(console.IsOpen())
+        console.RenderConsole();
+
 	GLenum errCode;
 	const GLubyte *errString;
 
@@ -402,13 +414,9 @@ void SDLGame::Render()
 	{
 		errString = gluErrorString(errCode);
 		printf("OpenGL Error: %s\n", errString);
-		Running = false;
 	}
 
-	//Render the GLConsole, and render it last so it's on top of everything
-	console.RenderConsole();
-
-    SDL_GL_SwapBuffers();
+    SDL_GL_SwapWindow(screen);
 }
 
 void SDLGame::Cleanup()
@@ -426,7 +434,7 @@ void dirtColorage(Vec3 normal)
 		glColor3f(.2, normal.y * normal.y, .2);
 }
 
-/*void TestBox()
+void SDLGame::TestBox()
 {
 	//TESTBOX
 	glBegin(GL_QUADS);
@@ -487,4 +495,10 @@ void dirtColorage(Vec3 normal)
     glVertex3f(-1.5f, 1.0f, -1.5f);
     
     glEnd();
-}*/
+}
+
+void SDLGame::GlutFakeInit() {
+    char *fake_argv[] = { "fake", NULL };
+    int fake_argc = 1;
+    glutInit(&fake_argc, fake_argv);
+}
