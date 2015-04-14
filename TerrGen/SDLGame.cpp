@@ -3,14 +3,18 @@
 
 #include "SDLGame.h"
 
-SDLGame theGame;
+SDLGame &SDLGame::getInstance() {
+    static SDLGame *game = new SDLGame();
+    return *game;
+}
 
 inline bool genTerrain(std::vector<std::string> *vArgs)
 {
 	GLConsole* pConsole = GetConsole();
+    Terrain &terrain = SDLGame::getInstance().terrain;
 
-	theGame.terrain.generateTerrain(theGame.baseHeight, theGame.randScale, theGame.scaleDiv);
-	theGame.camera.setPos(Vec3(0, theGame.terrain.getHeight(theGame.terrain.getLength()/2, theGame.terrain.getLength()/2) + 10, 0));
+	SDLGame::getInstance().terrain.generateTerrain(SDLGame::getInstance().baseHeight, SDLGame::getInstance().randScale, SDLGame::getInstance().scaleDiv);
+	SDLGame::getInstance().camera.setPos(Vec3(0, terrain.getHeight(terrain.getLength()/2, terrain.getLength()/2) + 10, 0));
 	
 	return true;
 }
@@ -18,18 +22,19 @@ inline bool genTerrain(std::vector<std::string> *vArgs)
 inline bool getPolyCount(std::vector<std::string> *vArgs)
 {
 	GLConsole* pConsole = GetConsole();
-	if(!theGame.drawQuad)
-		pConsole->Printf("Polys: %i", theGame.polyCount);
+	if(!SDLGame::getInstance().drawQuad)
+		pConsole->Printf("Polys: %i", SDLGame::getInstance().polyCount);
 	else
-		pConsole->Printf("Polys: %i \t Verts: %i", theGame.terrain.numTrgls, theGame.terrain.numVerts);
+		pConsole->Printf("Polys: %i \t Verts: %i", SDLGame::getInstance().terrain.numTrgls, SDLGame::getInstance().terrain.numVerts);
 
 	return true;
 }
 
 inline bool getCameraPos(std::vector<std::string> *vArgs)
 {
+    Vec3 cameraPos = SDLGame::getInstance().camera.getPos();
 	GLConsole* pConsole = GetConsole();
-	pConsole->Printf("Camera Pos: (%.2f, %.2f, %.2f)", theGame.camera.getPos().x, theGame.camera.getPos().y, theGame.camera.getPos().z);
+	pConsole->Printf("Camera Pos: (%.2f, %.2f, %.2f)", cameraPos.x, cameraPos.y, cameraPos.z);
 
 	return true;
 }
@@ -41,8 +46,7 @@ SDLGame::SDLGame() :
 		drawQuad(CVarUtils::CreateCVar<bool>("terrain.drawQuad", 1, "Drawing using quadtree on/off")),
 		baseHeight(CVarUtils::CreateCVar<float>("terrain.baseHeight", BASE_HEIGHT, "Base height at generation")),
 		randScale(CVarUtils::CreateCVar<float>("terrain.randScale", RAND_SCALE, "Randomness of generation")),
-		scaleDiv(CVarUtils::CreateCVar<float>("terrain.scaleDiv", SCALE_DIV, "Smoothness of generation")),
-        wtf(CVarUtils::CreateCVar<float>("wtf", 100.0, "lol"))
+		scaleDiv(CVarUtils::CreateCVar<float>("terrain.scaleDiv", SCALE_DIV, "Smoothness of generation"))
 {
 	polyCount = 0;
 

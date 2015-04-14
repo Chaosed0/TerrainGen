@@ -5,5 +5,5 @@
 
 int main(int argc, char* argv[])
 {
-	return theGame.Execute();
+	return SDLGame::getInstance().Execute();
 }

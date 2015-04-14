@@ -57,12 +57,10 @@ public:
 	float& randScale;
 	float& scaleDiv;
 
-    float& wtf;
-
 	bool hasFocus;		//Does the window have focus?
 	int polyCount;
 	
 	bool keyW, keyA, keyS, keyD;
-};
 
-extern SDLGame theGame;
+    static SDLGame &getInstance();
+};
