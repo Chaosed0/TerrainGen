@@ -244,78 +244,66 @@ void Terrain::generateTerrain(float baseHeight, float randScale, float scaleDiv)
 
 	randScale = 150;
 
-	for(int sideLen = fullLength - 1; sideLen >= 2; sideLen /= 2, randScale /= scaleDiv)
-	{
-		float newHeight;		//New height of the current node
-		float avg;				//Average of the corners
-		float c1, c2, c3, c4;	//Heights of corners of diamond or square
+    for (int sideLen = fullLength - 1; sideLen >= 2; sideLen /= 2, randScale /= scaleDiv)
+    {
+        float newHeight;		//New height of the current node
+        float avg;				//Average of the corners
+        float c1, c2, c3, c4;	//Heights of corners of diamond or square
 
-		for(int x = 0; x < fullLength - 1; x += sideLen)
-			for(int y = 0; y < fullLength - 1; y += sideLen)
-			{
-				//Do square calculation
-				c1 = getHeight(x, y);
-				c2 = getHeight(x + sideLen, y);
-				c3 = getHeight(x, y + sideLen);
-				c4 = getHeight(x + sideLen, y + sideLen);
+        for (int x = 0; x < fullLength - 1; x += sideLen) {
+            for (int y = 0; y < fullLength - 1; y += sideLen) {
+                //Do square calculation
+                c1 = getHeight(x, y);
+                c2 = getHeight(x + sideLen, y);
+                c3 = getHeight(x, y + sideLen);
+                c4 = getHeight(x + sideLen, y + sideLen);
 
-				//Do average with a little randomness
-				avg = (c1+c2+c3+c4)/4 + random(-randScale, randScale);
+                //Do average with a little randomness
+                avg = (c1 + c2 + c3 + c4) / 4 + random(-randScale, randScale);
 
-				//Set the middle to the average
-				setHeight(x + sideLen/2, y + sideLen/2, avg);
-			}
+                //Set the middle to the average
+                setHeight(x + sideLen / 2, y + sideLen / 2, avg);
+
+                //printf("Square: %d %d\n", x + sideLen/2, y + sideLen/2);
+            }
+        }
 
 		int halfSide = sideLen/2;
 
-		/*printf("SQUARES\n");
-		printf("halfSide = %i\n", halfSide);
-		printf("_________\n");
-		for(int i = 0; i < fullLength; i++)
-		{
-			for(int j = 0; j < fullLength; j++)
-			{
-				if(abs(getHeight(j, i)) < 2000000)
-					printf("%.2f \t", getHeight(j, i));
-				else
-					printf("### \t");
-			}
-			printf("\n\n");
-		}
-		printf("\n\n\n");*/
+        for (int x = 0; x <= fullLength - 1; x += halfSide) {
+            for (int y = (x + halfSide) % sideLen; y <= fullLength - 1; y += sideLen)
+            {
+                if (x > 0) {
+                    c1 = getHeight(x - halfSide, y); //left of center
+                } else {
+                    c1 = getHeight(x + halfSide, y); //left of center
+                }
+                
+                if (x < fullLength - 1) {
+                    c2 = getHeight(x + halfSide, y); //right of center
+                } else {
+                    c2 = getHeight(x - halfSide, y); //right of center
+                }
 
-		  for(int x = 0; x < fullLength - 1; x += halfSide)
-			for(int y = (x + halfSide) % sideLen; y < fullLength - 1; y += sideLen)
-			{
-				c1 = getHeight((x - halfSide + fullLength - 1) % (fullLength - 1), y); //left of center
-				c2 = getHeight((x + halfSide) % (fullLength - 1), y); //right of center
-				c3 = getHeight(x, (y + halfSide) % (fullLength - 1)); //below center
-				c4 = getHeight(x, (y - halfSide + fullLength - 1) % (fullLength - 1)); //above center
+                if (y > 0) {
+                    c3 = getHeight(x, y - halfSide); //above center
+                } else {
+                    c3 = getHeight(x, y + halfSide); //above center
+                }
 
-				avg = (c1+c2+c3+c4)/4 + random(-randScale, randScale);
-				//update value for center of diamond
-				setHeight(x, y, avg);
+                if (y < fullLength - 1) {
+                    c4 = getHeight(x, y + halfSide); //below center
+                } else {
+                    c4 = getHeight(x, y - halfSide); //below center
+                }
 
-				if(x == 0) 
-					setHeight(fullLength - 1, y, avg);
-				if(y == 0)
-					setHeight(x, fullLength - 1, avg);
-			}
+                avg = (c1 + c2 + c3 + c4) / 4 + random(-randScale, randScale);
+                //update value for center of diamond
+                setHeight(x, y, avg);
 
-		/*printf("DIAMONDS\n");
-		printf("_________\n");
-		for(int i = 0; i < fullLength; i++)
-		{
-			for(int j = 0; j < fullLength; j++)
-			{
-				if(abs(getHeight(j, i)) < 2000000)
-					printf("%.2f \t", getHeight(j, i));
-				else
-					printf("### \t");
-			}
-			printf("\n\n");
-		}
-		printf("\n\n\n");*/
+                //printf("Diamond: %d %d\n", x, y);
+            }
+        }
 	}
 
 	//erode();
