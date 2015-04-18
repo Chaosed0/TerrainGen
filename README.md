@@ -1,5 +1,5 @@
 #Terrain Generator
 
-An old project of mine (2010?) inspired by and emulating [Shamus Young's terrain generator](http://www.shamusyoung.com/twentysidedtale/?p=141). Used SDL 1.2, OpenGL and GLConsole.
+An old project of mine (2010?) inspired by and emulating [Shamus Young's terrain generator](http://www.shamusyoung.com/twentysidedtale/?p=141).
 
-Full disclosure: Most likely doesn't compile. Probably full of bugs. Isn't a great example of a terrain generator. I just like to save my old projects.
+It's been updated to use SDL2 and the generation algorithm's been fixed since I first created it, but it's still not the best example of a terrain generator you could reference. Mainly kept around for posterity.
